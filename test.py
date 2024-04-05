@@ -87,9 +87,11 @@ def main():
     
     # Test write operation
     write_msg = "test"
+    write_msg2 = "testhelloworld"
+    write_msg3 = "testnumbertres"
     ret = os.write(f, write_msg)
-    ret = os.write(f, write_msg)
-    ret = os.write(f, write_msg)
+    ret = os.write(f, write_msg2)
+    ret = os.write(f, write_msg3)
     ret = os.write(f, write_msg)
     assert (ret == len(write_msg))
     
@@ -97,15 +99,29 @@ def main():
     # Read the message we wrote
     message_t_format = 'Hl%ds' % MAX_MESSAGE_LENGTH
     message_t_size = struct.calcsize(message_t_format)
-    message_t = os.read(f, 1*message_t_size)
+    message_t = os.read(f, 2*message_t_size)
     message_t = os.read(f, 1*message_t_size)
     pid, timestamp, read_msg = struct.unpack(message_t_format, message_t)
     read_msg = read_msg.split('\0', 1)[0] # Remove NULL padding
-    assert (read_msg == write_msg)
+    assert (read_msg == write_msg3)
     print("after read")
     # We should not have any more unread messages since we read them all
+    assert (fcntl.ioctl(f, COUNT_UNREAD) == 1)
+    print("after first count")
+    for i in range(30000):
+        ret = os.write(f, write_msg)
+
+    os.lseek(f, 1*message_t_size, 0)
+    assert (fcntl.ioctl(f, COUNT_UNREAD) ==  30003)
+    ret = os.write(f, write_msg)
+    assert (fcntl.ioctl(f, COUNT_UNREAD) == 30004)
+    message_t = os.read(f, 2*message_t_size)
+    assert (fcntl.ioctl(f, COUNT_UNREAD) == 30002)
+    for i in range(30000):
+        os.read(f, 1*message_t_size)
     assert (fcntl.ioctl(f, COUNT_UNREAD) == 2)
-    print("after count left")
+    
+
     # Seek backwards one step
     #assert (os.lseek(f, -1*message_t_size, SEEK_CUR) == 0)
 

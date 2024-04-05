@@ -28,7 +28,7 @@ MODULE_LICENSE("GPL");
 /* globals */
 int my_major = 0; /* will hold the major # of my device driver */
 struct timeval tv; /* Used to get the current time */
-static LIST_HEAD(rooms); // used to save room heads
+static LIST_HEAD(rooms); // used to save rooms
 
 struct file_operations my_fops = {
     .open = my_open,
@@ -51,7 +51,7 @@ int init_module(void)
 	    return my_major;
     }
 
-    printk("new module\n\n\n\n\n");
+    //printk("new module\n\n\n\n\n");
     
     //
     // do_init();
@@ -91,29 +91,27 @@ int my_open(struct inode *inode, struct file *filp)
 
 int my_release(struct inode *inode, struct file *filp)
 {
-    printk("enter release\n");
+    //printk("enter release\n");
     // handle file closing
     room_data* data = (room_data*)filp->private_data;
     if(!data){
         return -EINVAL;
     }
-    printk("amount open: %d\n", data->open_cnt);
+    //printk("open refences: %d\n", data->open_cnt);
     data->open_cnt--;
     MOD_DEC_USE_COUNT;
     if(data->open_cnt){ //still open by others
         return 0;
     } 
-    printk("before message free\n");
     // free all data 
     msg_list* p = data->mlist;
     msg_list* next;
     while(p){
-        printk("deleting message: %s\n", p->msg.message);
+        //printk("deleting message: %s\n", p->msg.message);
         next = p->next;
         kfree(p);
         p = next;
     }
-    printk("before list del\n");
     list_del(&data->list);
     kfree(data);
     return 0;
@@ -121,11 +119,7 @@ int my_release(struct inode *inode, struct file *filp)
 
 ssize_t my_read(struct file *filp, char *buf, size_t count, loff_t *f_pos)
 {
-    printk("enter read\n");
-    printk("size of message: %d\n", (int)sizeof(message_t));
-    //
-    // Do read operation.
-    // Return number of bytes read.
+    //printk("enter read\n");
     if(!buf){
         return -EFAULT;
     }
@@ -134,7 +128,7 @@ ssize_t my_read(struct file *filp, char *buf, size_t count, loff_t *f_pos)
     room_data* room = (room_data*)filp->private_data;
     msg_list* pos = room->mlist;
     msg_list* list_end = room->ml_tail;
-    printk("cur msg: %d\nfpos: %d\npos = list end: %d\n", cur_msg, (int)*f_pos, (pos == list_end));
+    //printk("cur msg: %d fpos: %d\n", cur_msg, (int)*f_pos);
     int read_amount = (int)count / (int)sizeof(message_t);
 
     int idx = 0;
@@ -142,24 +136,23 @@ ssize_t my_read(struct file *filp, char *buf, size_t count, loff_t *f_pos)
         pos = pos->next;
         idx++;
     }
-    printk("read before starting to copy\nread amount: %d\nidx: %d\n", read_amount, idx);
+    //printk("idx reading from: %d\n", idx);
     int count_msg = 0;
-    //try to see what up with list end and pos
-    printk("is pos = list end: %d\n", pos == (list_end));
+
     while(pos != list_end && count_msg < read_amount){
-        printk("reading message number %d\n", count_msg);
+        //printk("reading message number %d\n", count_msg);
         if(copy_to_user(buf, &pos->msg, sizeof(message_t))){
             return -EBADF;
         }
-        printk("the message: %s\n", ((message_t*)buf)->message);
-        printk("pid: %d\n", ((message_t*)buf)->pid);
-        printk("timestamp: %ld\n", ((message_t*)buf)->timestamp);
+        //printk("the message: %s ", ((message_t*)buf)->message);
+        //printk("pid: %d ", ((message_t*)buf)->pid);
+        //printk("timestamp: %ld\n", ((message_t*)buf)->timestamp);
         ((message_t*)buf)++;
         count_msg++;
         pos = pos->next;
     }
     *f_pos += count_msg * sizeof(message_t);
-    printk("leaving read, f_pos: %d\n", (int)*f_pos);
+    //printk("leaving read, f_pos: %d\n", (int)*f_pos);
     return count_msg * sizeof(message_t);
 }
 
@@ -184,14 +177,13 @@ ssize_t my_write(struct file *filp, const char *buf, size_t count, loff_t *off){
     if(copy_from_user(&tail->msg.message, buf, count)){
         return -EBADF;
     }
-    printk("just written message: %s\n", tail->msg.message);
+    //printk("just written message: %s\n", tail->msg.message);
     tail->msg.pid = getpid();
     tail->msg.timestamp = gettime();
 
     room->ml_tail = tail->next;
     room->ml_tail->next = NULL;
     memset(room->ml_tail->msg.message, 0, MAX_MESSAGE_LENGTH);
-    //printk("leaving write\n");
     return count;
 }
 
@@ -211,6 +203,7 @@ int my_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned 
 }
 
 int my_count_unread(struct file *filp){
+    //printk("enter count unread");
     room_data* room = (room_data*)filp->private_data;
     msg_list* pos = room->mlist;
     msg_list* list_end = room->ml_tail;
@@ -225,6 +218,7 @@ int my_count_unread(struct file *filp){
         pos = pos->next;
         count++;
     }
+    //printk(", count: %d\n", count);
     return count;
 }
 

@@ -33,34 +33,28 @@ pid_t getpid();
 struct room_data* get_room_data(dev_t dev);
 
 
-struct message_t {
+typedef struct message_t {
     pid_t pid;
     time_t timestamp;
     char message[MAX_MESSAGE_LENGTH];
-};
+} message_t;
 
-typedef struct message_t message_t;
-
-struct msg_list {
+typedef struct msg_list {
     struct msg_list* next;
     message_t msg;
-};
+} msg_list;
 
-typedef struct msg_list msg_list;
-
-struct room_data{
-    msg_list* mlist;
-    msg_list* ml_tail;
+typedef struct room_data{
+    msg_list* mlist; //head
+    msg_list* ml_tail; //tail
     int open_cnt;
     kdev_t dev;
     struct list_head list;
-};
+} room_data;
 
-typedef struct room_data room_data;
-
-struct file_data{
+typedef struct file_data{
     room_data* room;
-    msg_list* cur;
-};
+    msg_list* cur; //current message
+} file_data;
 
 #endif

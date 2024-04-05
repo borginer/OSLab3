@@ -108,16 +108,16 @@ def main():
     # We should not have any more unread messages since we read them all
     assert (fcntl.ioctl(f, COUNT_UNREAD) == 1)
     print("after first count")
-    for i in range(30000):
+    for i in range(300000):
         ret = os.write(f, write_msg)
 
     os.lseek(f, 1*message_t_size, 0)
-    assert (fcntl.ioctl(f, COUNT_UNREAD) ==  30003)
+    assert (fcntl.ioctl(f, COUNT_UNREAD) ==  300003)
     ret = os.write(f, write_msg)
-    assert (fcntl.ioctl(f, COUNT_UNREAD) == 30004)
+    assert (fcntl.ioctl(f, COUNT_UNREAD) == 300004)
     message_t = os.read(f, 2*message_t_size)
-    assert (fcntl.ioctl(f, COUNT_UNREAD) == 30002)
-    for i in range(30000):
+    assert (fcntl.ioctl(f, COUNT_UNREAD) == 300002)
+    for i in range(300000):
         os.read(f, 1*message_t_size)
     assert (fcntl.ioctl(f, COUNT_UNREAD) == 2)
     

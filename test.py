@@ -88,19 +88,24 @@ def main():
     # Test write operation
     write_msg = "test"
     ret = os.write(f, write_msg)
+    ret = os.write(f, write_msg)
+    ret = os.write(f, write_msg)
+    ret = os.write(f, write_msg)
     assert (ret == len(write_msg))
     
+    print("after write")
     # Read the message we wrote
     message_t_format = 'Hl%ds' % MAX_MESSAGE_LENGTH
     message_t_size = struct.calcsize(message_t_format)
     message_t = os.read(f, 1*message_t_size)
+    message_t = os.read(f, 1*message_t_size)
     pid, timestamp, read_msg = struct.unpack(message_t_format, message_t)
     read_msg = read_msg.split('\0', 1)[0] # Remove NULL padding
     assert (read_msg == write_msg)
-
+    print("after read")
     # We should not have any more unread messages since we read them all
-    assert (fcntl.ioctl(f, COUNT_UNREAD) == 0)
-    
+    assert (fcntl.ioctl(f, COUNT_UNREAD) == 2)
+    print("after count left")
     # Seek backwards one step
     #assert (os.lseek(f, -1*message_t_size, SEEK_CUR) == 0)
 

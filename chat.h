@@ -26,7 +26,11 @@ loff_t my_llseek(struct file *, loff_t, int);
 
 int my_count_unread(struct file *flip); 
 
+time_t gettime();
 
+pid_t getpid();
+
+struct room_data* get_room_data(dev_t dev);
 
 
 struct message_t {
@@ -37,22 +41,26 @@ struct message_t {
 
 typedef struct message_t message_t;
 
-typedef struct {
+struct msg_list {
+    struct msg_list* next;
+    message_t msg;
+};
+
+typedef struct msg_list msg_list;
+
+struct room_data{
     msg_list* mlist;
     msg_list* ml_tail;
     int open_cnt;
     kdev_t dev;
     struct list_head list;
-} room_data;
+};
 
-typedef struct {
-    msg_list* next;
-    message_t msg;
-} msg_list;
+typedef struct room_data room_data;
 
-typedef struct {
+struct file_data{
     room_data* room;
     msg_list* cur;
-} file_data;
+};
 
 #endif
